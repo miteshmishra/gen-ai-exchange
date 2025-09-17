@@ -39,17 +39,18 @@ const ChatContainer = () => {
         display: 'flex',
         flexDirection: 'column',
         bgcolor: 'background.default',
-        maxWidth: '900px',
-        mx: 'auto',
         width: '100%',
-        px: { xs: 2, sm: 3, md: 4 },
       }}
     >
       <Box
         sx={{
           flex: 1,
           overflowY: 'auto',
-          py: 3,
+          pb: 20, // Add padding to prevent content from being hidden behind input
+          width: '100%',
+          maxWidth: '900px',
+          mx: 'auto',
+          px: { xs: 2, sm: 3, md: 4 }
         }}
       >
         {messagesToShow.map((message) => (

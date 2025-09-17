@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Paper, InputBase, IconButton, CircularProgress } from '@mui/material';
+import { Box, Paper, InputBase, IconButton, CircularProgress } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 
 interface ChatInputProps {
@@ -26,18 +26,36 @@ const ChatInput = ({ onSendMessage, isProcessing }: ChatInputProps) => {
   };
 
   return (
-    <Paper
-      elevation={3}
+    <Box
       sx={{
-        p: '8px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        position: 'sticky',
-        bottom: 16,
-        mx: 2,
-        borderRadius: 3,
+        position: 'fixed',
+        bottom: 0,
+        right: 0,
+        left: {
+          xs: 0,
+          sm: `${72}px`, // COLLAPSED_DRAWER_WIDTH
+          md: `${280}px`, // DRAWER_WIDTH
+        },
+        bgcolor: 'background.default',
+        p: 2,
+        pb: 3,
+        transition: theme => theme.transitions.create('left', {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
       }}
     >
+      <Paper
+        elevation={3}
+        sx={{
+          p: '8px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          borderRadius: 3,
+          bgcolor: 'background.paper',
+        }}
+      >
       <InputBase
         sx={{ ml: 1, flex: 1 }}
         placeholder="Ask about your trip plans..."
@@ -61,6 +79,7 @@ const ChatInput = ({ onSendMessage, isProcessing }: ChatInputProps) => {
         )}
       </IconButton>
     </Paper>
+    </Box>
   );
 };
 
