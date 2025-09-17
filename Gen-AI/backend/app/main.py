@@ -4,10 +4,27 @@ from .routers import auth, search, analytics, ai, favorites, preferences
 from .core.config import settings
 from .db.session import init_db
 
-app = FastAPI(title="Travel Hub API")
-
-# Initialize database
+# Initialize the database
 init_db()
+
+app = FastAPI(
+    title="Travel Hub API",
+    description="""
+    Travel Hub API provides a comprehensive backend for the travel planning application.
+    Features include:
+    * 🔐 User Authentication and Authorization
+    * 🔍 Travel Search and Recommendations
+    * 📊 Analytics and User Insights
+    * 🤖 AI-Powered Features
+    * ⭐ User Favorites Management
+    * ⚙️ User Preferences
+    """,
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+    swagger_ui_parameters={"defaultModelsExpandDepth": -1}
+)
 
 # Configure CORS
 app.add_middleware(

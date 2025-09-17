@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { Search, MapPin, Calendar, Users, DollarSign } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useTelemetry } from '../hooks/useTelemetry';
+import { AIImprovementBadge } from './AIImprovementBadge';
+
 
 interface SearchFormData {
   type: 'flight' | 'hotel' | 'train' | 'experience';
@@ -25,16 +28,53 @@ const SearchForm: React.FC = () => {
     },
   });
   const searchType = watch('type');
+  
+  // Telemetry tracking
+  const { trackEvent, startTask, completeTask, trackClick } = useTelemetry({
+    component: 'SearchForm',
+    taskId: 'search',
+  });
+  
+  // A/B testing variant
+  const [activeExperiment, setActiveExperiment] = useState<{
+    id: string;
+    featureKey: string;
+    variant: any;
+  } | null>(null);
+  
+  // AI improvements
+  const [aiImprovement, setAiImprovement] = useState<{
+    changeId: string;
+    featureKey: string;
+    timestamp: string;
+  } | null>(null);
+  
+  // Load A/B test variant and AI improvements (currently disabled)
+  useEffect(() => {
+    // These features are not yet implemented in the backend
+    console.log('A/B testing and AI improvements are not yet implemented');
+  }, []);
 
   const onSubmit = async (data: SearchFormData) => {
     if (!data.origin || !data.destination) {
       toast.error('Please enter both origin and destination');
+      trackEvent('validation_error', { error: 'missing_fields' });
       return;
     }
+    
+    // Start tracking the search task
+    startTask();
     
     try {
       let searchResult;
       const searchAPI = (await import('../services/api')).searchAPI;
+      
+      // Track search parameters
+      trackEvent('search_initiated', {
+        type: data.type,
+        experimentId: activeExperiment?.id,
+        variantId: activeExperiment?.variant?.id,
+      });
       
       switch (data.type) {
         case 'hotel':
@@ -47,6 +87,7 @@ const SearchForm: React.FC = () => {
           searchResult = await searchAPI.searchExperiences(data);
           break;
         default:
+          trackEvent('error', { type: 'invalid_search_type' });
           throw new Error('Invalid search type');
       }
       

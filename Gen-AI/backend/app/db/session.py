@@ -3,11 +3,12 @@ from sqlalchemy.orm import sessionmaker
 from ..core.config import settings
 from ..models.database import Base
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./travel_hub.db"
+# Import additional models to ensure they are included in database schema
+from ..models import trips, itinerary, feedback, preferences
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+SQLALCHEMY_DATABASE_URL = "postgresql://travel_user:travel_password@localhost:5432/travel_hub"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():

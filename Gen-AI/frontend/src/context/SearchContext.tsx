@@ -109,6 +109,7 @@ export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </SearchContext.Provider>
   );
+};
 
 export const useSearch = () => {
   const context = useContext(SearchContext);
