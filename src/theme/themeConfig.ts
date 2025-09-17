@@ -4,29 +4,59 @@ import type { ThemeOptions } from '@mui/material/styles';
 export const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
   palette: {
     mode,
-    primary: {
-      main: mode === 'light' ? '#1a73e8' : '#8ab4f8',
-      light: mode === 'light' ? '#4285f4' : '#adc6f5',
-      dark: mode === 'light' ? '#1557b0' : '#669df6',
-    },
-    secondary: {
-      main: mode === 'light' ? '#188038' : '#34a853',
-      light: mode === 'light' ? '#34a853' : '#81c995',
-      dark: mode === 'light' ? '#0d652d' : '#137333',
-    },
-    background: {
-      default: mode === 'light' ? '#ffffff' : '#1e1e1e',
-      paper: mode === 'light' ? '#f8f9fa' : '#2d2d2d',
-    },
-    text: {
-      primary: mode === 'light' ? '#202124' : '#ffffff',
-      secondary: mode === 'light' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-    },
-    divider: mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)',
-    action: {
-      hover: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
-      selected: mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)',
-    },
+    ...(mode === 'light'
+      ? {
+          // Light mode colors
+          primary: {
+            main: '#1a73e8',
+            light: '#4285f4',
+            dark: '#1557b0',
+          },
+          secondary: {
+            main: '#188038',
+            light: '#34a853',
+            dark: '#0d652d',
+          },
+          background: {
+            default: '#ffffff',
+            paper: '#f8f9fa',
+          },
+          text: {
+            primary: '#202124',
+            secondary: '#5f6368',
+          },
+          divider: 'rgba(0, 0, 0, 0.12)',
+          action: {
+            hover: 'rgba(0, 0, 0, 0.04)',
+            selected: 'rgba(0, 0, 0, 0.08)',
+          },
+        }
+      : {
+          // Dark mode colors
+          primary: {
+            main: '#8ab4f8',
+            light: '#adc6f5',
+            dark: '#669df6',
+          },
+          secondary: {
+            main: '#188038',
+            light: '#34a853',
+            dark: '#0d652d',
+          },
+          background: {
+            default: '#1e1e1e',
+            paper: '#2d2d2d',
+          },
+          text: {
+            primary: '#ffffff',
+            secondary: 'rgba(255, 255, 255, 0.7)',
+          },
+          divider: 'rgba(255, 255, 255, 0.12)',
+          action: {
+            hover: 'rgba(255, 255, 255, 0.08)',
+            selected: 'rgba(255, 255, 255, 0.12)',
+          },
+        }),
   },
   typography: {
     fontFamily: '"Google Sans", "Roboto", "Arial", sans-serif',
@@ -51,20 +81,20 @@ export const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          scrollbarColor: mode === 'light' ? "#959595 #f1f1f1" : "#6b6b6b #2b2b2b",
+          scrollbarColor: "#6b6b6b #2b2b2b",
           "&::-webkit-scrollbar, & *::-webkit-scrollbar": {
-            backgroundColor: mode === 'light' ? "#f1f1f1" : "#2b2b2b",
+            backgroundColor: "#2b2b2b",
             width: '8px',
             height: '8px',
           },
           "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
             borderRadius: 4,
-            backgroundColor: mode === 'light' ? "#c1c1c1" : "#424242",
+            backgroundColor: "#424242",
             minHeight: 24,
-            border: `2px solid ${mode === 'light' ? "#f1f1f1" : "#2b2b2b"}`,
+            border: "2px solid #2b2b2b",
           },
           "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: mode === 'light' ? "#a8a8a8" : "#525252",
+            backgroundColor: "#525252",
           },
         },
       },
@@ -72,11 +102,10 @@ export const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: mode === 'light' ? '#ffffff' : '#1e1e1e',
           backgroundImage: 'none',
           '&.MuiDrawer-paper': {
-            backgroundColor: mode === 'light' ? '#f8f9fa' : '#2d2d2d',
-            borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`
+            borderRight: '1px solid',
+            borderColor: 'divider'
           }
         }
       }
@@ -84,7 +113,6 @@ export const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: mode === 'light' ? '#f8f9fa' : '#2d2d2d',
           boxShadow: 'none',
           borderBottom: 'none',
           minHeight: '64px',
@@ -105,8 +133,8 @@ export const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: mode === 'light' ? '#f8f9fa' : '#1f1f1f',
-          borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+          borderRight: '1px solid',
+          borderColor: 'divider',
         },
       },
     },
@@ -123,14 +151,10 @@ export const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiInputBase: {
       styleOverrides: {
         root: {
-          backgroundColor: mode === 'light' ? '#f8f9fa' : '#2d2d2d',
           borderRadius: 8,
           fontSize: '1rem',
           padding: '8px 12px',
           minHeight: '40px',
-          '&.Mui-focused': {
-            backgroundColor: mode === 'light' ? '#f8f9fa' : '#2d2d2d',
-          },
           '& .MuiInputBase-input': {
             padding: '4px 0',
             '&::placeholder': {
@@ -145,7 +169,3 @@ export const getDesignTokens = (mode: 'light' | 'dark'): ThemeOptions => ({
     borderRadius: 4,
   },
 });
-
-const theme = createTheme(getDesignTokens('dark'));
-
-export default theme;

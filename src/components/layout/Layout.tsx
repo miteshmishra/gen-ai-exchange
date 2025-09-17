@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Box, useMediaQuery, useTheme } from '@mui/material';
+import { useState, useMemo } from 'react';
+import { Box, useMediaQuery, ThemeProvider, createTheme } from '@mui/material';
 import type { ReactNode } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import { useChat } from '../../contexts/ChatContext';
+import { getDesignTokens } from '../../theme/theme';
+import CssBaseline from '@mui/material/CssBaseline';
 
 const DRAWER_WIDTH = 280;
 const COLLAPSED_DRAWER_WIDTH = 72;
@@ -15,7 +17,12 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const theme = useTheme();
+  const [mode, setMode] = useState<'light' | 'dark'>('dark');
+  const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+  
+  const handleToggleTheme = () => {
+    setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+  };
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { messages } = useChat();
 
@@ -36,11 +43,15 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh' }}>
-      <Header 
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ display: 'flex', height: '100vh' }}>
+        <Header 
         onMenuClick={handleDrawerToggle}
         isMobile={isMobile}
         isCollapsed={!isMobile && isCollapsed}
+        onToggleTheme={handleToggleTheme}
+        mode={mode}
       />
       
       <Sidebar
@@ -74,7 +85,8 @@ const Layout = ({ children }: LayoutProps) => {
       >
         {children}
       </Box>
-    </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 

@@ -1,13 +1,17 @@
-import { AppBar, Toolbar, Typography, Avatar, Box, IconButton, Button } from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { AppBar, Toolbar, Typography, Avatar, Box, IconButton, useTheme } from '@mui/material';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 interface HeaderProps {
   onMenuClick: () => void;
   isMobile: boolean;
   isCollapsed?: boolean;
+  onToggleTheme: () => void;
+  mode: 'light' | 'dark';
 }
 
-const Header = ({ onMenuClick, isMobile, isCollapsed = false }: HeaderProps) => {
+const Header = ({ onMenuClick, isMobile, isCollapsed = false, onToggleTheme, mode }: HeaderProps) => {
+  const theme = useTheme();
   return (
     <AppBar 
       position="fixed"
@@ -23,13 +27,13 @@ const Header = ({ onMenuClick, isMobile, isCollapsed = false }: HeaderProps) => 
       <Toolbar 
         disableGutters
         sx={{
-          height: '50px',
-          minHeight: '50px !important',
-          py: '8px',
+          height: '64px',
+          minHeight: '64px !important',
+          py: '12px',
           backgroundImage: 'none',
           '&.MuiToolbar-root': {
-            height: '50px',
-            minHeight: '50px !important',
+            height: '64px',
+            minHeight: '64px !important',
             backgroundImage: 'none',
             borderBottom: 'none'
           }
@@ -62,34 +66,6 @@ const Header = ({ onMenuClick, isMobile, isCollapsed = false }: HeaderProps) => 
           >
             AI Trip Planner
           </Typography>
-
-          <Box 
-            sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              ml: 1,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-              px: 0.5,
-              py: 0.25,
-              '&:hover': {
-                bgcolor: 'action.hover',
-                cursor: 'pointer'
-              }
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                color: 'text.secondary',
-                fontSize: '0.75rem',
-              }}
-            >
-              2.5 Flash
-            </Typography>
-            <ArrowDropDownIcon sx={{ fontSize: 16, color: 'text.secondary', ml: 0.5 }} />
-          </Box>
         </Box>
 
         <Box sx={{ 
@@ -112,27 +88,22 @@ const Header = ({ onMenuClick, isMobile, isCollapsed = false }: HeaderProps) => 
             }
           })
         }}>
-          <Button
-            variant="contained"
-            size="small"
+          <IconButton
+            onClick={onToggleTheme}
             sx={{
-              bgcolor: 'background.default',
-              color: 'text.primary',
-              textTransform: 'none',
-              px: 1.5,
-              py: 0.5,
-              fontSize: '0.75rem',
-              transition: theme => theme.transitions.create(['opacity', 'width', 'padding', 'margin'], {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
+              color: 'text.secondary',
+              p: 0.5,
               '&:hover': {
-                bgcolor: 'action.hover'
+                backgroundColor: 'action.hover'
               }
             }}
           >
-            Upgrade
-          </Button>
+            {mode === 'dark' ? (
+              <Brightness7Icon sx={{ fontSize: 20 }} />
+            ) : (
+              <Brightness4Icon sx={{ fontSize: 20 }} />
+            )}
+          </IconButton>
 
           <IconButton
             sx={{

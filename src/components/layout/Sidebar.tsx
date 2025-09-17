@@ -8,7 +8,6 @@ import {
   Typography,
   Box,
   Divider,
-  IconButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
@@ -85,84 +84,94 @@ const Sidebar = ({ open, onClose, messages, onNewChat, width, variant, isCollaps
         display: 'flex', 
         flexDirection: 'column', 
         height: '100%',
-        my: '7px'
+        pt: '7px'
       }}>
-        <Box 
-          sx={{ 
-            px: 1, 
-            py: 0.5,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: isCollapsed ? 'center' : 'space-between',
-            mb: 1
-          }}
-        >
-          <IconButton
-            onClick={onClose}
-            size="small"
-            sx={{
-              color: 'text.secondary',
-              p: 0.5,
-              '&:hover': {
-                backgroundColor: 'action.hover'
-              }
+        <List sx={{ 
+          py: 0,
+          mb: isCollapsed ? 0 : 0.5
+        }}>
+          <ListItem 
+            disablePadding 
+            sx={{ 
+              mb: isCollapsed ? 2 : 0.5,
+              display: 'flex',
+              justifyContent: isCollapsed ? 'center' : 'space-between'
             }}
           >
-            <MenuIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-          {!isCollapsed && (
-            <IconButton
-              size="small"
+            <ListItemButton
+              onClick={onClose}
               sx={{
-                color: 'text.secondary',
-                p: 0.5,
+                minHeight: 28,
+                py: 0.5,
+                px: 0.5,
+                ml: isCollapsed ? 0.5 : 0,
+                mr: 0.5,
+                minWidth: isCollapsed ? 28 : 'auto',
+                borderRadius: 1,
+                justifyContent: 'center',
                 '&:hover': {
                   backgroundColor: 'action.hover'
                 }
               }}
             >
-              <SearchIcon sx={{ fontSize: 20 }} />
-            </IconButton>
-          )}
-        </Box>
-        <Box 
-          sx={{ 
-            px: 1, 
-            py: 0.5,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 0.5
-          }}
-        >
-          <ListItemButton
-            onClick={onNewChat}
-            sx={{
-              minHeight: 28,
-              py: 0.5,
-              px: isCollapsed ? 0.5 : 1,
-              borderRadius: 1,
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-              '&:hover': {
-                backgroundColor: 'action.hover'
-              }
-            }}
-          >
-            <ListItemIcon>
-              <AddIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-            </ListItemIcon>
-            <ListItemText 
-              primary="New chat"
-              primaryTypographyProps={{
-                fontSize: '0.875rem',
-                color: 'text.primary'
-              }}
+              <MenuIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+            </ListItemButton>
+            {!isCollapsed && (
+              <ListItemButton
+                sx={{
+                  minHeight: 28,
+                  py: 0.5,
+                  px: 1,
+                  mx: 0.5,
+                  minWidth: 28,
+                  borderRadius: 1,
+                  justifyContent: 'center',
+                  '&:hover': {
+                    backgroundColor: 'action.hover'
+                  }
+                }}
+              >
+                <SearchIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+              </ListItemButton>
+            )}
+          </ListItem>
+        </List>
+        <List sx={{ 
+          py: 0,
+          mb: isCollapsed ? 0 : 0.5
+        }}>
+          <ListItem disablePadding sx={{ mb: isCollapsed ? 2 : 0.5 }}>
+            <ListItemButton
+              onClick={onNewChat}
               sx={{
-                m: 0,
-                display: isCollapsed ? 'none' : 'block'
+                minHeight: 28,
+                py: 0.5,
+                px: isCollapsed ? 0.5 : 1,
+                mx: 0.5,
+                borderRadius: 1,
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
+                '&:hover': {
+                  backgroundColor: 'action.hover'
+                }
               }}
-            />
-          </ListItemButton>
-        </Box>
+            >
+              <ListItemIcon>
+                <AddIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
+              </ListItemIcon>
+              <ListItemText 
+                primary="New chat"
+                primaryTypographyProps={{
+                  fontSize: '0.875rem',
+                  color: 'text.primary'
+                }}
+                sx={{
+                  m: 0,
+                  display: isCollapsed ? 'none' : 'block'
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
 
         {!isCollapsed && (
           <Typography
@@ -183,7 +192,7 @@ const Sidebar = ({ open, onClose, messages, onNewChat, width, variant, isCollaps
         <List sx={{ 
           py: 0,
           '& .MuiListItem-root': {
-            mb: 0.5,
+            mb: isCollapsed ? 2 : 0.5,
             '&:last-child': {
               mb: 0
             }
@@ -274,7 +283,7 @@ const Sidebar = ({ open, onClose, messages, onNewChat, width, variant, isCollaps
           overflow: 'auto', 
           py: 0,
           '& .MuiListItem-root': {
-            mb: 0.5,
+            mb: isCollapsed ? 2 : 0.5,
             '&:last-child': {
               mb: 0
             }
@@ -320,7 +329,7 @@ const Sidebar = ({ open, onClose, messages, onNewChat, width, variant, isCollaps
         <List sx={{ 
           py: 0,
           '& .MuiListItem-root': {
-            mb: 0.5,
+            mb: isCollapsed ? 2 : 0.5,
             '&:last-child': {
               mb: 0
             }
