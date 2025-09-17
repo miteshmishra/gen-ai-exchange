@@ -7,6 +7,7 @@ from ..models.agent import AgentAction, Experiment
 from ..models.feedback import Feedback
 from ..db.session import get_db
 from ..core.config import settings
+from .ollama import OllamaService
 
 openai.api_key = settings.OPENAI_API_KEY
 
@@ -34,25 +35,146 @@ class AIService:
             4. Off-the-beaten-path experiences
             5. Budget allocation tips
             """
+            
+            system_prompt = "You are an expert travel advisor with deep knowledge of destinations worldwide."
 
-            response = await openai.ChatCompletion.acreate(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are an expert travel advisor with deep knowledge of destinations worldwide."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=1000
-            )
+            if settings.AI_PROVIDER == "ollama":
+                suggestions = await OllamaService.generate_completion(
+                    prompt=prompt,
+                    system_prompt=system_prompt,
+                    temperature=0.7,
+                    max_tokens=1000
+                )
+            else:  # OpenAI
+                client = openai.AsyncOpenAI()
+                response = await client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=1000
+                )
+                suggestions = response.choices[0].message.content
 
+            if isinstance(suggestions, str):
+                suggestions = suggestions.split("\n")  # Convert string to list if needed
+            
             return {
-                "suggestions": response.choices[0].message.content,
+                "suggestions": suggestions,
                 "destination": destination,
                 "success": True
             }
 
         except Exception as e:
             print(f"Error getting travel suggestions: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    @staticmethod
+    async def generate_itinerary(
+        destination: str,
+        duration: int,
+        activities: List[str],
+        preferences: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Generate a personalized travel itinerary using AI.
+        """
+        try:
+            prompt = f"""As a travel itinerary expert, create a detailed {duration}-day itinerary for {destination}.
+            Activities of interest: {', '.join(activities)}
+            Preferences: {preferences}
+
+            Please provide:
+            1. Daily schedule with times
+            2. Activity descriptions
+            3. Travel time estimates
+            4. Meal recommendations
+            5. Budget considerations
+            """
+
+            client = openai.AsyncOpenAI()
+            response = await client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are an expert travel planner who creates detailed, realistic itineraries."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1500
+            )
+
+            itinerary = response.choices[0].message.content
+            if isinstance(itinerary, str):
+                itinerary = itinerary.split("\n")  # Convert string to list if needed
+            
+            return {
+                "itinerary": itinerary,
+                "destination": destination,
+                "success": True
+            }
+
+        except Exception as e:
+            print(f"Error generating itinerary: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    @staticmethod
+    async def get_local_insights(
+        destination: str,
+        topics: List[str]
+    ) -> Dict[str, Any]:
+        """
+        Get AI-generated local insights about a destination.
+        """
+        try:
+            prompt = f"""As a local expert, provide comprehensive insights about {destination}.
+            Topics to cover: {', '.join(topics)}
+
+            Please provide detailed information about:
+            1. Local culture and customs
+            2. Transportation options
+            3. Safety considerations
+            4. Dining and cuisine
+            5. Hidden gems and local secrets
+            """
+
+            client = openai.AsyncOpenAI()
+            response = await client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a knowledgeable local guide with deep insights about destinations."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1200
+            )
+
+            insights = response.choices[0].message.content
+            if isinstance(insights, str):
+                # Convert string to dict if needed
+                insights_dict = {}
+                lines = insights.split("\n")
+                for line in lines:
+                    if ":" in line:
+                        key, value = line.split(":", 1)
+                        insights_dict[key.strip()] = value.strip()
+                insights = insights_dict
+            
+            return {
+                "insights": insights,
+                "destination": destination,
+                "success": True
+            }
+
+        except Exception as e:
+            print(f"Error getting local insights: {e}")
             return {
                 "success": False,
                 "error": str(e)

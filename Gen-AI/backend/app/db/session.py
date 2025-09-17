@@ -6,9 +6,10 @@ from ..models.database import Base
 # Import additional models to ensure they are included in database schema
 from ..models import trips, itinerary, feedback, preferences
 
-SQLALCHEMY_DATABASE_URL = "postgresql://travel_user:travel_password@localhost:5432/travel_hub"
+# Use database URL from settings
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in SQLALCHEMY_DATABASE_URL else {})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():

@@ -16,3 +16,12 @@ class ItineraryRequest(BaseModel):
 class LocalInsightsRequest(BaseModel):
     destination: str
     topics: List[str]
+
+
+class ADKTravelRequest(BaseModel):
+    destination: str
+    interests: List[str]
+    budget: float
+    duration: int
+    preferences: Dict[str, Any]
+    use_adk: bool = True
