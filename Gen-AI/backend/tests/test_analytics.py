@@ -1,0 +1,85 @@
+import pytest
+from fastapi.testclient import TestClient
+from app.db.models import User, Search
+from app.routers.auth import get_password_hash
+
+def test_get_user_analytics(client, test_db):
+    """Test getting user analytics"""
+    # Create a user and get authentication token
+    hashed_password = get_password_hash("password123")
+    user = User(email="analytics@example.com", full_name="Analytics User", hashed_password=hashed_password)
+    test_db.add(user)
+    test_db.commit()
+    
+    # Add some search history
+    search1 = Search(user_id=user.id, query="New York", search_type="hotels")
+    search2 = Search(user_id=user.id, query="Paris", search_type="hotels")
+    search3 = Search(user_id=user.id, query="JFK to LAX", search_type="flights")
+    test_db.add_all([search1, search2, search3])
+    test_db.commit()
+    
+    login_response = client.post(
+        "/api/auth/login",
+        data={"username": "analytics@example.com", "password": "password123"}
+    )
+    token = login_response.json()["access_token"]
+    
+    # Test user analytics endpoint
+    response = client.get(
+        "/api/analytics/user",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "recent_searches" in data
+    assert len(data["recent_searches"]) == 3
+    assert "search_count_by_type" in data
+    assert data["search_count_by_type"]["hotels"] == 2
+    assert data["search_count_by_type"]["flights"] == 1
+
+def test_get_search_analytics(client, test_db):
+    """Test getting search analytics"""
+    # Create an admin user
+    hashed_password = get_password_hash("admin123")
+    admin = User(email="admin@example.com", full_name="Admin User", hashed_password=hashed_password)
+    test_db.add(admin)
+    
+    # Create regular users with searches
+    user1 = User(email="user1@example.com", full_name="User One", hashed_password=hashed_password)
+    user2 = User(email="user2@example.com", full_name="User Two", hashed_password=hashed_password)
+    test_db.add_all([user1, user2])
+    test_db.commit()
+    
+    # Add searches
+    searches = [
+        Search(user_id=user1.id, query="New York", search_type="hotels"),
+        Search(user_id=user1.id, query="Paris", search_type="hotels"),
+        Search(user_id=user2.id, query="JFK to LAX", search_type="flights"),
+        Search(user_id=user2.id, query="London tours", search_type="experiences")
+    ]
+    test_db.add_all(searches)
+    test_db.commit()
+    
+    # Login as admin
+    login_response = client.post(
+        "/api/auth/login",
+        data={"username": "admin@example.com", "password": "admin123"}
+    )
+    token = login_response.json()["access_token"]
+    
+    # Test search analytics endpoint
+    response = client.get(
+        "/api/analytics/search",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "total_searches" in data
+    assert data["total_searches"] == 4
+    assert "searches_by_type" in data
+    assert data["searches_by_type"]["hotels"] == 2
+    assert data["searches_by_type"]["flights"] == 1
+    assert data["searches_by_type"]["experiences"] == 1
+    assert "popular_destinations" in data
