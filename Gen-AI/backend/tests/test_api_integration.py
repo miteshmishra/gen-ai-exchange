@@ -203,6 +203,80 @@ transportation: Efficient metro system"""
         assert response.status_code == 422
         assert "detail" in response.json()
 
+    def test_ai_service_error_handling(self, client: AsyncClient, mock_openai_client):
+        """Test error handling when AI service fails"""
+        mock_openai_client.chat.completions.create.side_effect = Exception("AI service error")
+        payload = {
+            "destination": "Paris",
+            "interests": ["culture", "food"],
+            "budget": 2000.0,
+            "duration": 7
+        }
+        
+        response = client.post("/api/ai/suggestions", json=payload)
+        
+        assert response.status_code == 500
+        data = response.json()
+        assert "detail" in data
+        assert "AI service error" in data["detail"]
+
+    def test_empty_ai_response_handling(self, client: AsyncClient, mock_openai_client):
+        """Test handling of empty AI response"""
+        mock_response = AsyncMock()
+        mock_response.choices = []
+        mock_openai_client.chat.completions.create.return_value = mock_response
+        
+        payload = {
+            "destination": "Paris",
+            "interests": ["culture", "food"],
+            "budget": 2000.0,
+            "duration": 7
+        }
+        
+        response = client.post("/api/ai/suggestions", json=payload)
+        
+        assert response.status_code == 500
+        data = response.json()
+        assert "detail" in data
+        assert "No response from AI service" in data["detail"]
+
+    def test_adk_service_error_handling(self, client: AsyncClient, mock_openai_client):
+        """Test error handling when ADK service fails"""
+        mock_openai_client.chat.completions.create.side_effect = Exception("ADK service error")
+        payload = {
+            "destination": "Paris",
+            "interests": ["culture", "food"],
+            "budget": 2000.0,
+            "duration": 7,
+            "use_adk": True
+        }
+        
+        response = client.post("/api/ai/adk/recommendations", json=payload)
+        
+        assert response.status_code == 500
+        data = response.json()
+        assert "detail" in data
+        assert "ADK service error" in data["detail"]
+
+    def test_long_request_timeout_handling(self, client: AsyncClient, mock_openai_client):
+        """Test handling of long request timeouts"""
+        import asyncio
+        mock_openai_client.chat.completions.create.side_effect = asyncio.TimeoutError("Request timed out")
+        
+        payload = {
+            "destination": "Paris",
+            "interests": ["culture", "food"],
+            "budget": 2000.0,
+            "duration": 7
+        }
+        
+        response = client.post("/api/ai/suggestions", json=payload)
+        
+        assert response.status_code == 504
+        data = response.json()
+        assert "detail" in data
+        assert "Request timed out" in data["detail"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

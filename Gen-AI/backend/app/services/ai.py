@@ -1,4 +1,5 @@
 import openai
+import asyncio
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -39,40 +40,53 @@ class AIService:
             system_prompt = "You are an expert travel advisor with deep knowledge of destinations worldwide."
 
             if settings.AI_PROVIDER == "ollama":
-                suggestions = await OllamaService.generate_completion(
-                    prompt=prompt,
-                    system_prompt=system_prompt,
-                    temperature=0.7,
-                    max_tokens=1000
-                )
+                try:
+                    suggestions = await OllamaService.generate_completion(
+                        prompt=prompt,
+                        system_prompt=system_prompt,
+                        temperature=0.7,
+                        max_tokens=1000
+                    )
+                except asyncio.TimeoutError as e:
+                    raise TimeoutError("Ollama service request timed out")
+                except Exception as e:
+                    raise Exception(f"Ollama service error: {str(e)}")
             else:  # OpenAI
                 client = openai.AsyncOpenAI()
-                response = await client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=1000
-                )
-                suggestions = response.choices[0].message.content
+                try:
+                    response = await client.chat.completions.create(
+                        model="gpt-4",
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7,
+                        max_tokens=1000
+                    )
+                    
+                    if not response.choices:
+                        raise ValueError("No response from AI service")
+                    suggestions = response.choices[0].message.content
+                except asyncio.TimeoutError as e:
+                    raise TimeoutError("OpenAI service request timed out")
+                except Exception as e:
+                    raise Exception(f"OpenAI service error: {str(e)}")
 
-            if isinstance(suggestions, str):
-                suggestions = suggestions.split("\n")  # Convert string to list if needed
-            
+            if not suggestions:
+                raise ValueError("Empty response from AI service")
+
             return {
-                "suggestions": suggestions,
+                "suggestions": suggestions.split("\n") if isinstance(suggestions, str) else suggestions,
                 "destination": destination,
                 "success": True
             }
 
+        except TimeoutError as e:
+            raise HTTPException(status_code=504, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
         except Exception as e:
-            print(f"Error getting travel suggestions: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            raise HTTPException(status_code=500, detail=str(e))
 
     @staticmethod
     async def generate_itinerary(

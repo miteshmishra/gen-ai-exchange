@@ -53,10 +53,10 @@ def test_get_search_analytics(client, test_db_session):
     
     # Add searches
     searches = [
-        Search(user_id=user1.id, query="New York", search_type="hotels"),
-        Search(user_id=user1.id, query="Paris", search_type="hotels"),
-        Search(user_id=user2.id, query="JFK to LAX", search_type="flights"),
-        Search(user_id=user2.id, query="London tours", search_type="experiences")
+        UserSearches(user_id=user1.id, search_term="New York", search_type="hotels", location="New York"),
+        UserSearches(user_id=user1.id, search_term="Paris", search_type="hotels", location="Paris"),
+        UserSearches(user_id=user2.id, search_term="JFK to LAX", search_type="flights", location="United States"),
+        UserSearches(user_id=user2.id, search_term="London tours", search_type="experiences", location="London")
     ]
     test_db_session.add_all(searches)
     test_db_session.commit()

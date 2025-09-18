@@ -36,6 +36,22 @@ router = APIRouter()
                     "example": {"detail": "Invalid request parameters"}
                 }
             }
+        },
+        500: {
+            "description": "AI Service Error",
+            "content": {
+                "application/json": {
+                    "example": {"error": "Failed to generate travel suggestions"}
+                }
+            }
+        },
+        504: {
+            "description": "Gateway Timeout",
+            "content": {
+                "application/json": {
+                    "example": {"error": "Request timed out"}
+                }
+            }
         }
     }
 )
@@ -53,13 +69,20 @@ async def get_travel_suggestions(request: TravelSuggestionRequest) -> Dict[str, 
     }
     ```
     """
-    suggestions = await AIService.get_travel_suggestions(
-        destination=request.destination,
-        interests=request.interests,
-        budget=request.budget,
-        duration=request.duration
-    )
-    return suggestions
+    try:
+        suggestions = await AIService.get_travel_suggestions(
+            destination=request.destination,
+            interests=request.interests,
+            budget=request.budget,
+            duration=request.duration
+        )
+        return suggestions
+    except TimeoutError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post(
     "/itinerary",
