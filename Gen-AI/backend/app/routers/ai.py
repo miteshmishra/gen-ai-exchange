@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Dict, Any
 from ..services.ai import AIService
-from ..services.adk_service import ADKService
+from ..services.adk import get_adk_client
 from ..models.ai import TravelSuggestionRequest, ItineraryRequest, LocalInsightsRequest, ADKTravelRequest
 from ..core.security import get_current_user
 
 router = APIRouter()
+
+def get_ai_service() -> AIService:
+    return AIService(adk_client_instance=get_adk_client())
 
 @router.post(
     "/suggestions",
@@ -55,7 +58,7 @@ router = APIRouter()
         }
     }
 )
-async def get_travel_suggestions(request: TravelSuggestionRequest) -> Dict[str, Any]:
+async def get_travel_suggestions(request: TravelSuggestionRequest, ai_service: AIService = Depends(get_ai_service)) -> Dict[str, Any]:
     """
     Get AI-powered travel suggestions based on user preferences.
     
@@ -65,16 +68,18 @@ async def get_travel_suggestions(request: TravelSuggestionRequest) -> Dict[str, 
         "destination": "Paris",
         "interests": ["art", "food", "culture", "history"],
         "budget": 2000.0,
-        "duration": 5
+        "duration": 5,
+        "use_adk": true
     }
     ```
     """
     try:
-        suggestions = await AIService.get_travel_suggestions(
+        suggestions = await ai_service.get_travel_suggestions(
             destination=request.destination,
             interests=request.interests,
             budget=request.budget,
-            duration=request.duration
+            duration=request.duration,
+            use_adk=request.use_adk
         )
         return suggestions
     except TimeoutError as e:
@@ -133,7 +138,7 @@ async def get_travel_suggestions(request: TravelSuggestionRequest) -> Dict[str, 
         }
     }
 )
-async def generate_itinerary(request: ItineraryRequest) -> Dict[str, Any]:
+async def generate_itinerary(request: ItineraryRequest, ai_service: AIService = Depends(get_ai_service)) -> Dict[str, Any]:
     """
     Generate a personalized travel itinerary using AI.
     
@@ -151,17 +156,26 @@ async def generate_itinerary(request: ItineraryRequest) -> Dict[str, Any]:
                 "dinner": "19:00"
             },
             "interests": ["art", "history", "food"]
-        }
+        },
+        "use_adk": true
     }
     ```
     """
-    itinerary = await AIService.generate_itinerary(
-        destination=request.destination,
-        duration=request.duration,
-        activities=request.activities,
-        preferences=request.preferences
-    )
-    return itinerary
+    try:
+        itinerary = await ai_service.generate_itinerary(
+            destination=request.destination,
+            duration=request.duration,
+            activities=request.activities,
+            preferences=request.preferences,
+            use_adk=request.use_adk
+        )
+        return itinerary
+    except TimeoutError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post(
     "/local-insights",
@@ -173,45 +187,32 @@ async def generate_itinerary(request: ItineraryRequest) -> Dict[str, Any]:
                 "application/json": {
                     "example": {
                         "insights": {
-                            "local_customs": "Parisians appreciate when visitors attempt to speak French. Start with 'Bonjour' before any interaction.",
-                            "best_time_to_visit": "Spring (April-June) and Fall (September-November) offer mild weather and fewer tourists.",
-                            "transportation": "The Metro is the most efficient way to get around. Consider buying a carnet of 10 tickets.",
-                            "dining_etiquette": "Lunch is typically 12-2pm and dinner starts around 7:30pm. Reservations recommended.",
-                            "hidden_gems": "Check out Canal Saint-Martin for a local vibe with boutiques and cafes."
-                        },
-                        "destination": "Paris",
-                        "success": True
+                            "culture": "Rich history...",
+                            "transportation": "Various options..."
+                        }
                     }
                 }
-            }
+            },
         },
-        422: {
-            "description": "Validation Error",
-            "content": {
-                "application/json": {
-                    "example": {"detail": "Invalid request parameters"}
-                }
-            }
-        }
-    }
+        400: {"description": "Invalid request parameters"},
+        500: {"description": "Internal server error"},
+    },
 )
-async def get_local_insights(request: LocalInsightsRequest) -> Dict[str, Any]:
+async def get_local_insights(request: LocalInsightsRequest, ai_service: AIService = Depends(get_ai_service)) -> Dict[str, Any]:
     """
-    Get AI-generated local insights about a destination.
-    
-    Example Request:
-    ```json
-    {
-        "destination": "Paris",
-        "topics": ["customs", "best_time", "transportation", "dining", "hidden_gems"]
-    }
-    ```
+    Generates local insights for a given destination and topics.
     """
-    insights = await AIService.get_local_insights(
-        destination=request.destination,
-        topics=request.topics
-    )
-    return insights
+    try:
+        insights = await ai_service.get_local_insights(
+            destination=request.destination,
+            topics=request.topics,
+            use_adk=request.use_adk
+        )
+        return insights
+    except TimeoutError as e:
+        raise HTTPException(status_code=504, detail=f"AI service timed out: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
 
 
 @router.post(

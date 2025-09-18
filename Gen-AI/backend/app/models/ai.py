@@ -6,16 +6,19 @@ class TravelSuggestionRequest(BaseModel):
     interests: List[str]
     budget: float
     duration: int
+    use_adk: bool = False
 
 class ItineraryRequest(BaseModel):
     destination: str
     duration: int
     activities: List[str]
     preferences: Dict[str, Any]
+    use_adk: bool = False
 
 class LocalInsightsRequest(BaseModel):
     destination: str
     topics: List[str]
+    use_adk: bool = False
 
 
 class ADKTravelRequest(BaseModel):

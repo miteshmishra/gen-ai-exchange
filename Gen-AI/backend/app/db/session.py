@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from ..core.config import settings
-from ..models.database import Base
+from ..db.database import Base
 
 # Import additional models to ensure they are included in database schema
 from ..models import trips, itinerary, feedback, preferences

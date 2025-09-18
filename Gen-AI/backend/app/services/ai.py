@@ -12,9 +12,38 @@ from .ollama import OllamaService
 
 openai.api_key = settings.OPENAI_API_KEY
 
+from app.services.adk import get_adk_client, ADKClient
+
 class AIService:
-    @staticmethod
+    def __init__(self, adk_client_instance: ADKClient):
+        self._adk_client = adk_client_instance
+    async def _generate_content(self, prompt: str, images: List[str] = None) -> str:
+        if settings.ADK_MODEL_ID:
+            return await self._adk_client.generate_content(prompt=prompt, images=images)
+        elif settings.OPENAI_API_KEY:
+            client = openai.AsyncOpenAI()
+            response = await client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content
+        else:
+            # Ollama integration
+            try:
+                response = await OllamaService.generate_completion(
+                    prompt=prompt,
+                    system_prompt="You are a helpful AI assistant.",
+                    temperature=0.7,
+                    max_tokens=1000
+                )
+                return response
+            except asyncio.TimeoutError as e:
+                raise TimeoutError("Ollama service request timed out")
+            except Exception as e:
+                raise Exception(f"Ollama service error: {str(e)}")
+
     async def get_travel_suggestions(
+        self,
         destination: str,
         interests: List[str],
         budget: float,
@@ -24,53 +53,9 @@ class AIService:
         Get AI-powered travel suggestions based on user preferences.
         """
         try:
-            prompt = f"""As a travel expert, provide personalized suggestions for a trip to {destination}.
-            Trip Duration: {duration} days
-            Budget: ${budget}
-            Interests: {', '.join(interests)}
-
-            Please provide:
-            1. Best time to visit
-            2. Must-visit attractions
-            3. Local cuisine recommendations
-            4. Off-the-beaten-path experiences
-            5. Budget allocation tips
-            """
+            prompt = f"""As a travel expert, provide personalized suggestions for a trip to {destination}.\n            Trip Duration: {duration} days\n            Budget: ${budget}\n            Interests: {', '.join(interests)}\n\n            Please provide:\n            1. Best time to visit\n            2. Must-visit attractions\n            3. Local cuisine recommendations\n            4. Off-the-beaten-path experiences\n            5. Budget allocation tips\n            """
             
-            system_prompt = "You are an expert travel advisor with deep knowledge of destinations worldwide."
-
-            if settings.AI_PROVIDER == "ollama":
-                try:
-                    suggestions = await OllamaService.generate_completion(
-                        prompt=prompt,
-                        system_prompt=system_prompt,
-                        temperature=0.7,
-                        max_tokens=1000
-                    )
-                except asyncio.TimeoutError as e:
-                    raise TimeoutError("Ollama service request timed out")
-                except Exception as e:
-                    raise Exception(f"Ollama service error: {str(e)}")
-            else:  # OpenAI
-                client = openai.AsyncOpenAI()
-                try:
-                    response = await client.chat.completions.create(
-                        model="gpt-4",
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.7,
-                        max_tokens=1000
-                    )
-                    
-                    if not response.choices:
-                        raise ValueError("No response from AI service")
-                    suggestions = response.choices[0].message.content
-                except asyncio.TimeoutError as e:
-                    raise TimeoutError("OpenAI service request timed out")
-                except Exception as e:
-                    raise Exception(f"OpenAI service error: {str(e)}")
+            suggestions = await self._generate_content(prompt)
 
             if not suggestions:
                 raise ValueError("Empty response from AI service")
@@ -88,8 +73,8 @@ class AIService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-    @staticmethod
     async def generate_itinerary(
+        self,
         destination: str,
         duration: int,
         activities: List[str],
@@ -99,30 +84,9 @@ class AIService:
         Generate a personalized travel itinerary using AI.
         """
         try:
-            prompt = f"""As a travel itinerary expert, create a detailed {duration}-day itinerary for {destination}.
-            Activities of interest: {', '.join(activities)}
-            Preferences: {preferences}
+            prompt = f"""As a travel itinerary expert, create a detailed {duration}-day itinerary for {destination}.\n            Activities of interest: {', '.join(activities)}\n            Preferences: {preferences}\n\n            Please provide:\n            1. Daily schedule with times\n            2. Activity descriptions\n            3. Travel time estimates\n            4. Meal recommendations\n            5. Budget considerations\n            """
 
-            Please provide:
-            1. Daily schedule with times
-            2. Activity descriptions
-            3. Travel time estimates
-            4. Meal recommendations
-            5. Budget considerations
-            """
-
-            client = openai.AsyncOpenAI()
-            response = await client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are an expert travel planner who creates detailed, realistic itineraries."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=1500
-            )
-
-            itinerary = response.choices[0].message.content
+            itinerary = await self._generate_content(prompt)
             if isinstance(itinerary, str):
                 itinerary = itinerary.split("\n")  # Convert string to list if needed
             
@@ -139,8 +103,8 @@ class AIService:
                 "error": str(e)
             }
 
-    @staticmethod
     async def get_local_insights(
+        self,
         destination: str,
         topics: List[str]
     ) -> Dict[str, Any]:
@@ -148,29 +112,9 @@ class AIService:
         Get AI-generated local insights about a destination.
         """
         try:
-            prompt = f"""As a local expert, provide comprehensive insights about {destination}.
-            Topics to cover: {', '.join(topics)}
+            prompt = f"""As a local expert, provide comprehensive insights about {destination}.\n            Topics to cover: {', '.join(topics)}\n\n            Please provide detailed information about:\n            1. Local culture and customs\n            2. Transportation options\n            3. Safety considerations\n            3. Dining and cuisine\n            4. Hidden gems and local secrets\n            """
 
-            Please provide detailed information about:
-            1. Local culture and customs
-            2. Transportation options
-            3. Safety considerations
-            4. Dining and cuisine
-            5. Hidden gems and local secrets
-            """
-
-            client = openai.AsyncOpenAI()
-            response = await client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a knowledgeable local guide with deep insights about destinations."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=1200
-            )
-
-            insights = response.choices[0].message.content
+            insights = await self._generate_content(prompt)
             if isinstance(insights, str):
                 # Convert string to dict if needed
                 insights_dict = {}

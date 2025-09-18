@@ -46,3 +46,7 @@ app.include_router(preferences.router, prefix="/api/preferences", tags=["Prefere
 @app.get("/")
 async def root():
     return {"message": "Welcome to Travel Hub API"}
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok"}
