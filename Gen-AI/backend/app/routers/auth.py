@@ -27,7 +27,7 @@ class UserSchema(UserBase):
     class Config:
         from_attributes = True
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

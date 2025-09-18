@@ -3,13 +3,13 @@ from fastapi.testclient import TestClient
 from app.db.models import User
 from app.routers.auth import get_password_hash
 
-def test_search_hotels(client, test_db):
+def test_search_hotels(client, test_db_session):
     """Test hotel search endpoint"""
     # Create a user and get authentication token
     hashed_password = get_password_hash("password123")
     user = User(email="hotel@example.com", full_name="Hotel User", hashed_password=hashed_password)
-    test_db.add(user)
-    test_db.commit()
+    test_db_session.add(user)
+    test_db_session.commit()
     
     login_response = client.post(
         "/api/auth/login",
@@ -40,13 +40,13 @@ def test_search_hotels(client, test_db):
     assert isinstance(data["hotels"], list)
     assert "total" in data
 
-def test_search_flights(client, test_db):
+def test_search_flights(client, test_db_session):
     """Test flight search endpoint"""
     # Create a user and get authentication token
     hashed_password = get_password_hash("password123")
     user = User(email="flight@example.com", full_name="Flight User", hashed_password=hashed_password)
-    test_db.add(user)
-    test_db.commit()
+    test_db_session.add(user)
+    test_db_session.commit()
     
     login_response = client.post(
         "/api/auth/login",
@@ -78,13 +78,13 @@ def test_search_flights(client, test_db):
     assert isinstance(data["flights"], list)
     assert "total" in data
 
-def test_search_experiences(client, test_db):
+def test_search_experiences(client, test_db_session):
     """Test experiences search endpoint"""
     # Create a user and get authentication token
     hashed_password = get_password_hash("password123")
     user = User(email="exp@example.com", full_name="Experience User", hashed_password=hashed_password)
-    test_db.add(user)
-    test_db.commit()
+    test_db_session.add(user)
+    test_db_session.commit()
     
     login_response = client.post(
         "/api/auth/login",

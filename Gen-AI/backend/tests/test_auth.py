@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from app.db.models import User
 from app.routers.auth import get_password_hash
 
-def test_register_user(client, test_db):
+def test_register_user(client, test_db_session):
     """Test user registration endpoint"""
     response = client.post(
         "/api/auth/register",
@@ -16,18 +16,18 @@ def test_register_user(client, test_db):
     assert "id" in data
     
     # Check that user was added to database
-    db_user = test_db.query(User).filter(User.email == "test@example.com").first()
+    db_user = test_db_session.query(User).filter(User.email == "test@example.com").first()
     assert db_user is not None
     assert db_user.email == "test@example.com"
     assert db_user.full_name == "Test User"
 
-def test_register_existing_user(client, test_db):
+def test_register_existing_user(client, test_db_session):
     """Test registering a user with an email that already exists"""
     # Create a user first
     hashed_password = get_password_hash("password123")
     user = User(email="existing@example.com", full_name="Existing User", hashed_password=hashed_password)
-    test_db.add(user)
-    test_db.commit()
+    test_db_session.add(user)
+    test_db_session.commit()
     
     # Try to register with the same email
     response = client.post(
@@ -37,13 +37,13 @@ def test_register_existing_user(client, test_db):
     assert response.status_code == 400
     assert "Email already registered" in response.json()["detail"]
 
-def test_login_user(client, test_db):
+def test_login_user(client, test_db_session):
     """Test user login endpoint"""
     # Create a user first
     hashed_password = get_password_hash("password123")
     user = User(email="login@example.com", full_name="Login User", hashed_password=hashed_password)
-    test_db.add(user)
-    test_db.commit()
+    test_db_session.add(user)
+    test_db_session.commit()
     
     # Login with correct credentials
     response = client.post(
@@ -55,13 +55,13 @@ def test_login_user(client, test_db):
     assert "access_token" in data
     assert data["token_type"] == "bearer"
 
-def test_login_wrong_password(client, test_db):
+def test_login_wrong_password(client, test_db_session):
     """Test login with wrong password"""
     # Create a user first
     hashed_password = get_password_hash("password123")
     user = User(email="login@example.com", full_name="Login User", hashed_password=hashed_password)
-    test_db.add(user)
-    test_db.commit()
+    test_db_session.add(user)
+    test_db_session.commit()
     
     # Login with wrong password
     response = client.post(
@@ -71,13 +71,13 @@ def test_login_wrong_password(client, test_db):
     assert response.status_code == 401
     assert "Incorrect email or password" in response.json()["detail"]
 
-def test_get_current_user(client, test_db):
+def test_get_current_user(client, test_db_session):
     """Test getting current user information"""
     # Create a user first
     hashed_password = get_password_hash("password123")
     user = User(email="current@example.com", full_name="Current User", hashed_password=hashed_password)
-    test_db.add(user)
-    test_db.commit()
+    test_db_session.add(user)
+    test_db_session.commit()
     
     # Login to get token
     login_response = client.post(
