@@ -5,27 +5,47 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from ..models.agent import AgentAction, Experiment
-from ..models.feedback import Feedback
+from ..db.models import Feedback
 from ..db.session import get_db
 from ..core.config import settings
 from .ollama import OllamaService
+import google.generativeai as genai
+import vertexai.preview.generative_models as generative_models
+import vertexai
 
-openai.api_key = settings.OPENAI_API_KEY
+
 
 from app.services.adk import get_adk_client, ADKClient
 
 class AIService:
     def __init__(self, adk_client_instance: ADKClient):
         self._adk_client = adk_client_instance
-    async def _generate_content(self, prompt: str, images: List[str] = None) -> str:
-        if settings.ADK_MODEL_ID:
+        if settings.AI_PROVIDER == "gemini":
+            vertexai.init(project=settings.GOOGLE_CLOUD_PROJECT, location=settings.GOOGLE_CLOUD_LOCATION)
+            self.gemini_model = genai.GenerativeModel(settings.ADK_MODEL_ID)
+
+    async def _generate_content(self, prompt: str, images: List[str] = None, use_adk: bool = True) -> str:
+        if use_adk and settings.ADK_MODEL_ID:
             return await self._adk_client.generate_content(prompt=prompt, images=images)
+        elif settings.AI_PROVIDER == "gemini":
+            try:
+                response = await self.gemini_model.generate_content_async(
+                    contents=[prompt]
+                )
+                return response.candidates[0].content.parts[0].text
+            except Exception as e:
+                raise ValueError(f"Gemini service error: {e}")
         elif settings.OPENAI_API_KEY:
             client = openai.AsyncOpenAI()
-            response = await client.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}]
-            )
+            try:
+                response = await client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": prompt}]
+                )
+            except Exception as e:
+                raise ValueError(f"AI service error: {e}")
+            if not response.choices:
+                raise ValueError("No response from AI service")
             return response.choices[0].message.content
         else:
             # Ollama integration
@@ -47,7 +67,8 @@ class AIService:
         destination: str,
         interests: List[str],
         budget: float,
-        duration: int
+        duration: int,
+        use_adk: bool = True
     ) -> Dict[str, Any]:
         """
         Get AI-powered travel suggestions based on user preferences.
@@ -55,13 +76,12 @@ class AIService:
         try:
             prompt = f"""As a travel expert, provide personalized suggestions for a trip to {destination}.\n            Trip Duration: {duration} days\n            Budget: ${budget}\n            Interests: {', '.join(interests)}\n\n            Please provide:\n            1. Best time to visit\n            2. Must-visit attractions\n            3. Local cuisine recommendations\n            4. Off-the-beaten-path experiences\n            5. Budget allocation tips\n            """
             
-            suggestions = await self._generate_content(prompt)
-
-            if not suggestions:
-                raise ValueError("Empty response from AI service")
+            suggestions = await self._generate_content(prompt, use_adk=use_adk)
+            if isinstance(suggestions, str):
+                suggestions = [suggestions] # Convert string to list if needed
 
             return {
-                "suggestions": suggestions.split("\n") if isinstance(suggestions, str) else suggestions,
+                "suggestions": suggestions,
                 "destination": destination,
                 "success": True
             }
@@ -78,7 +98,8 @@ class AIService:
         destination: str,
         duration: int,
         activities: List[str],
-        preferences: Dict[str, Any]
+        preferences: Dict[str, Any],
+        use_adk: bool = True
     ) -> Dict[str, Any]:
         """
         Generate a personalized travel itinerary using AI.
@@ -86,7 +107,7 @@ class AIService:
         try:
             prompt = f"""As a travel itinerary expert, create a detailed {duration}-day itinerary for {destination}.\n            Activities of interest: {', '.join(activities)}\n            Preferences: {preferences}\n\n            Please provide:\n            1. Daily schedule with times\n            2. Activity descriptions\n            3. Travel time estimates\n            4. Meal recommendations\n            5. Budget considerations\n            """
 
-            itinerary = await self._generate_content(prompt)
+            itinerary = await self._generate_content(prompt, use_adk=use_adk)
             if isinstance(itinerary, str):
                 itinerary = itinerary.split("\n")  # Convert string to list if needed
             
@@ -106,7 +127,8 @@ class AIService:
     async def get_local_insights(
         self,
         destination: str,
-        topics: List[str]
+        topics: List[str],
+        use_adk: bool = True
     ) -> Dict[str, Any]:
         """
         Get AI-generated local insights about a destination.
@@ -114,16 +136,9 @@ class AIService:
         try:
             prompt = f"""As a local expert, provide comprehensive insights about {destination}.\n            Topics to cover: {', '.join(topics)}\n\n            Please provide detailed information about:\n            1. Local culture and customs\n            2. Transportation options\n            3. Safety considerations\n            3. Dining and cuisine\n            4. Hidden gems and local secrets\n            """
 
-            insights = await self._generate_content(prompt)
+            insights = await self._generate_content(prompt, use_adk=use_adk)
             if isinstance(insights, str):
-                # Convert string to dict if needed
-                insights_dict = {}
-                lines = insights.split("\n")
-                for line in lines:
-                    if ":" in line:
-                        key, value = line.split(":", 1)
-                        insights_dict[key.strip()] = value.strip()
-                insights = insights_dict
+                insights = [insights] # Convert string to list if needed
             
             return {
                 "insights": insights,

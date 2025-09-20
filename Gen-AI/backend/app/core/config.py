@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     
     # AI Model Configuration
-    AI_PROVIDER: Literal["openai", "ollama"] = os.getenv("AI_PROVIDER", "openai")
+    AI_PROVIDER: Literal["openai", "ollama", "gemini"] = os.getenv("AI_PROVIDER", "openai")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama2")
 
@@ -26,5 +26,11 @@ class Settings(BaseSettings):
 
     class Config:
         case_sensitive = True
+
+    def reload(self):
+        # Reload environment variables
+        load_dotenv()
+        for field in self.model_fields:
+            setattr(self, field, os.getenv(field.upper(), getattr(self, field)))
 
 settings = Settings()

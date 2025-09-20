@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Dict, Any
+import asyncio
 from ..services.ai import AIService
 from ..services.adk import get_adk_client
 from ..models.ai import TravelSuggestionRequest, ItineraryRequest, LocalInsightsRequest, ADKTravelRequest
 from ..core.security import get_current_user
+from ..services.adk_service import ADKService
 
 router = APIRouter()
 
-def get_ai_service() -> AIService:
-    return AIService(adk_client_instance=get_adk_client())
+def get_ai_service(mock_adk_client: Any = None) -> AIService:
+    return AIService(adk_client_instance=get_adk_client(mock_adk_client))
 
 @router.post(
     "/suggestions",
@@ -61,7 +63,7 @@ def get_ai_service() -> AIService:
 async def get_travel_suggestions(request: TravelSuggestionRequest, ai_service: AIService = Depends(get_ai_service)) -> Dict[str, Any]:
     """
     Get AI-powered travel suggestions based on user preferences.
-    
+
     Example Request:
     ```json
     {
@@ -82,12 +84,12 @@ async def get_travel_suggestions(request: TravelSuggestionRequest, ai_service: A
             use_adk=request.use_adk
         )
         return suggestions
-    except TimeoutError as e:
-        raise HTTPException(status_code=504, detail=str(e))
+    except asyncio.TimeoutError as e:
+        raise HTTPException(status_code=504, detail=f"AI service request timed out: {str(e)}")
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=f"Invalid request parameters: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
 
 @router.post(
     "/itinerary",
@@ -141,7 +143,7 @@ async def get_travel_suggestions(request: TravelSuggestionRequest, ai_service: A
 async def generate_itinerary(request: ItineraryRequest, ai_service: AIService = Depends(get_ai_service)) -> Dict[str, Any]:
     """
     Generate a personalized travel itinerary using AI.
-    
+
     Example Request:
     ```json
     {
@@ -170,7 +172,7 @@ async def generate_itinerary(request: ItineraryRequest, ai_service: AIService = 
             use_adk=request.use_adk
         )
         return itinerary
-    except TimeoutError as e:
+    except asyncio.TimeoutError as e:
         raise HTTPException(status_code=504, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -209,7 +211,7 @@ async def get_local_insights(request: LocalInsightsRequest, ai_service: AIServic
             use_adk=request.use_adk
         )
         return insights
-    except TimeoutError as e:
+    except asyncio.TimeoutError as e:
         raise HTTPException(status_code=504, detail=f"AI service timed out: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
@@ -283,7 +285,7 @@ async def get_local_insights(request: LocalInsightsRequest, ai_service: AIServic
 async def get_adk_recommendations(request: ADKTravelRequest) -> Dict[str, Any]:
     """
     Get travel recommendations using Google ADK agents.
-    
+
     Example Request:
     ```json
     {
@@ -394,7 +396,7 @@ async def get_adk_recommendations(request: ADKTravelRequest) -> Dict[str, Any]:
 async def generate_adk_itinerary(request: ADKTravelRequest) -> Dict[str, Any]:
     """
     Generate a smart itinerary using Google ADK agents.
-    
+
     Example Request:
     ```json
     {
@@ -499,7 +501,7 @@ async def generate_adk_itinerary(request: ADKTravelRequest) -> Dict[str, Any]:
 async def get_adk_insights(request: LocalInsightsRequest) -> Dict[str, Any]:
     """
     Get comprehensive local insights using Google ADK agents.
-    
+
     Example Request:
     ```json
     {

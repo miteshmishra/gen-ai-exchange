@@ -1,25 +1,20 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Float
-from sqlalchemy.orm import relationship
+from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime
-from .database import Base
 
-class Feedback(Base):
-    __tablename__ = "feedback"
+class Feedback(BaseModel):
+    id: Optional[int] = None
+    user_id: int
+    trip_id: Optional[int] = None
+    itinerary_item_id: Optional[int] = None
+    subject_type: str
+    variant_id: Optional[str] = None
+    rating: float
+    comment: Optional[str] = None
+    task_time_ms: Optional[int] = None
+    screen_reader_notes: Optional[str] = None
+    locale: str
+    created_at: Optional[datetime] = None
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    trip_id = Column(Integer, ForeignKey("trips.id"), nullable=True)
-    itinerary_item_id = Column(Integer, ForeignKey("itinerary_items.id"), nullable=True)
-    subject_type = Column(String)  # UI component, itinerary suggestion, etc.
-    variant_id = Column(String, nullable=True)  # For A/B testing
-    rating = Column(Float)  # 1-5 rating
-    comment = Column(String, nullable=True)
-    task_time_ms = Column(Integer, nullable=True)  # Time to complete task
-    screen_reader_notes = Column(String, nullable=True)  # Accessibility feedback
-    locale = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    # Relationships
-    user = relationship("User", back_populates="feedback")
-    trip = relationship("Trip", back_populates="feedback")
-    itinerary_item = relationship("ItineraryItem", back_populates="feedback")
+    class Config:
+        orm_mode = True

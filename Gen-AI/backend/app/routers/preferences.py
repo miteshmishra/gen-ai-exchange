@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from ..core.security import get_current_user
 from ..db.session import get_db
-from ..models.database import User as DBUser
-from ..models.preferences import UserPreferences
+from ..db.models import User as DBUser
+from ..db.models import UserPreferences
 from pydantic import BaseModel
 from typing import List, Optional
 

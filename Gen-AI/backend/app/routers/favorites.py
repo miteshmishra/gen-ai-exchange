@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from ..models.database import Favorite
+from ..db.models import Favorite
 from ..core.security import get_current_user
 from ..db.session import get_db
 from datetime import datetime

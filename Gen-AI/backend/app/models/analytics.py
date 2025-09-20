@@ -1,40 +1,18 @@
-from pydantic import BaseModel
-from typing import List, Dict, Any
-from datetime import datetime
-
-class SearchPattern(BaseModel):
-    type: str
-    count: int
-
-class RecentSearch(BaseModel):
-    type: str
-    query: Dict[str, Any]
-    date: str
-
-class Favorite(BaseModel):
-    type: str
-    data: Dict[str, Any]
-    date: str
+from pydantic import BaseModel, Field
+from typing import Dict, Any, List, Optional
 
 class UserAnalytics(BaseModel):
+    user_id: int
     total_searches: int
-    search_patterns: Dict[str, int]
+    search_patterns: Dict[str, int] = Field(..., alias="search_patterns")
     favorite_destinations: List[str]
-    recent_searches: List[RecentSearch]
-    favorites: List[Favorite]
-
-class PopularDestination(BaseModel):
-    destination: str
-    count: int
-
-class SearchTypeMetrics(BaseModel):
-    search_type: str
-    count: int
+    recent_searches: List[Dict[str, Any]]
+    favorites: List[Dict[str, Any]]
 
 class SearchAnalytics(BaseModel):
     daily_searches: int
-    search_types: Dict[str, int]
-    popular_destinations: List[PopularDestination]
+    search_types: Dict[str, Any]
+    popular_destinations: List[Dict[str, Any]]
     conversion_rate: float
     total_users: int
     total_searches: int

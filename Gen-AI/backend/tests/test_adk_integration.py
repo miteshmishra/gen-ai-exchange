@@ -15,8 +15,8 @@ class TestADKAiApiEndpoints:
     def mock_adk_client(self, mock_adk_response):
         """Mock ADKClient"""
         mock_adk_instance = MagicMock()
-        mock_adk_instance.generate_content.return_value = mock_adk_response
-        with patch('app.services.adk.get_adk_client', return_value=mock_adk_instance):
+        mock_adk_instance.generate_content = AsyncMock(return_value=mock_adk_response)
+        with patch('app.services.adk.ADKClient', return_value=mock_adk_instance):
             yield mock_adk_instance
 
     @pytest.fixture
@@ -36,6 +36,16 @@ class TestADKAiApiEndpoints:
         with patch('openai.AsyncOpenAI', return_value=mock_client):
             yield mock_client
 
+    @pytest.fixture
+    def client(self, mock_adk_client):
+        from app.main import app
+        from app.routers.ai import get_ai_service
+        from fastapi.testclient import TestClient
+        app.dependency_overrides[get_ai_service] = lambda: get_ai_service(mock_adk_client=mock_adk_client)
+        with TestClient(app) as client:
+            yield client
+        app.dependency_overrides = {}
+
     @pytest.mark.asyncio
     async def test_travel_suggestions_with_adk(self, client: AsyncClient, mock_adk_client):
         """Test /api/ai/suggestions endpoint with use_adk=True."""
@@ -46,11 +56,11 @@ class TestADKAiApiEndpoints:
             "duration": 7,
             "use_adk": True
         }
-        response = await client.post("/api/ai/suggestions", json=payload)
+        response = client.post("/api/ai/suggestions", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert "suggestions" in data
-        assert data["suggestions"] == "ADK generated content"
+        assert data["suggestions"] == ["mocked adk response"]
         mock_adk_client.generate_content.assert_called_once()
 
     @pytest.mark.asyncio
@@ -63,11 +73,11 @@ class TestADKAiApiEndpoints:
             "duration": 7,
             "use_adk": False
         }
-        response = await client.post("/api/ai/suggestions", json=payload)
+        response = client.post("/api/ai/suggestions", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert "suggestions" in data
-        assert data["suggestions"] == "OpenAI generated content"
+        assert data["suggestions"] == ["OpenAI generated content"]
         mock_openai_client.chat.completions.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -80,11 +90,11 @@ class TestADKAiApiEndpoints:
             "preferences": {"pace": "moderate", "budget": "mid-range"},
             "use_adk": True
         }
-        response = await client.post("/api/ai/itinerary", json=payload)
+        response = client.post("/api/ai/itinerary", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert "itinerary" in data
-        assert data["itinerary"] == "ADK generated content"
+        assert data["itinerary"] == ["mocked adk response"]
         mock_adk_client.generate_content.assert_called_once()
 
     @pytest.mark.asyncio
@@ -97,11 +107,11 @@ class TestADKAiApiEndpoints:
             "preferences": {"pace": "moderate", "budget": "mid-range"},
             "use_adk": False
         }
-        response = await client.post("/api/ai/itinerary", json=payload)
+        response = client.post("/api/ai/itinerary", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert "itinerary" in data
-        assert data["itinerary"] == "OpenAI generated content"
+        assert data["itinerary"] == ["OpenAI generated content"]
         mock_openai_client.chat.completions.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -112,11 +122,11 @@ class TestADKAiApiEndpoints:
             "topics": ["culture", "transportation"],
             "use_adk": True
         }
-        response = await client.post("/api/ai/local-insights", json=payload)
+        response = client.post("/api/ai/local-insights", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert "insights" in data
-        assert data["insights"] == "ADK generated content"
+        assert data["insights"] == ["mocked adk response"]
         mock_adk_client.generate_content.assert_called_once()
 
     @pytest.mark.asyncio
@@ -127,9 +137,9 @@ class TestADKAiApiEndpoints:
             "topics": ["culture", "transportation"],
             "use_adk": False
         }
-        response = await client.post("/api/ai/local-insights", json=payload)
+        response = client.post("/api/ai/local-insights", json=payload)
         assert response.status_code == 200
         data = response.json()
         assert "insights" in data
-        assert data["insights"] == "OpenAI generated content"
+        assert data["insights"] == ["OpenAI generated content"]
         mock_openai_client.chat.completions.create.assert_called_once()

@@ -15,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import app and models
 from app.main import app
-from app.db.database import Base
+from app.db.models import Base
 from app.db.session import get_db
 
 
@@ -72,3 +72,11 @@ def client(test_db_session):
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
+
+@pytest.fixture
+def user_data():
+    return {
+        "email": "test@example.com",
+        "password": "password123",
+        "full_name": "Test User"
+    }

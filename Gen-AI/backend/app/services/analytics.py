@@ -2,11 +2,11 @@ from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from datetime import datetime, timedelta
-from ..models.database import SearchHistory, User, Favorite
+from ..db.models import SearchHistory, User, Favorite, Feedback
 from ..models.agent import Experiment, AgentAction
-from ..models.feedback import Feedback
 from collections import Counter
 import random
+import json
 
 class AnalyticsService:
     @staticmethod
@@ -31,13 +31,14 @@ class AnalyticsService:
         # Calculate search patterns
         search_types = Counter(search.search_type for search in searches)
         destinations = Counter(
-            search.query.get('destination') 
+            (json.loads(search.query) if isinstance(search.query, str) else search.query).get('destination') 
             for search in searches 
-            if search.query.get('destination')
+            if (json.loads(search.query) if isinstance(search.query, str) else search.query).get('destination')
         )
 
         return {
             "total_searches": len(searches),
+            "user_id": user_id,
             "search_patterns": dict(search_types),
             "favorite_destinations": [dest for dest, _ in destinations.most_common(5)],
             "recent_searches": [
@@ -240,9 +241,9 @@ class AnalyticsService:
             .all()
         )
         destinations = Counter(
-            search.query.get('destination')
+            (json.loads(search.query) if isinstance(search.query, str) else search.query).get('destination')
             for search in searches
-            if search.query.get('destination')
+            if (json.loads(search.query) if isinstance(search.query, str) else search.query).get('destination')
         )
 
         # Calculate conversion rate (users who searched and then favorited)

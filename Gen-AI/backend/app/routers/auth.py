@@ -11,7 +11,7 @@ from pydantic import BaseModel, EmailStr
 from ..core.security import create_access_token, get_current_user
 from ..core.config import settings
 from ..db.session import get_db
-from ..models.database import User as DBUser
+from ..db.models import User as DBUser
 
 class UserBase(BaseModel):
     email: EmailStr

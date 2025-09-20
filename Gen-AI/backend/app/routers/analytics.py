@@ -5,7 +5,7 @@ from ..models.analytics import UserAnalytics, SearchAnalytics
 from ..services.analytics import AnalyticsService
 from ..core.security import get_current_user
 from ..db.session import get_db
-from ..models.database import User as DBUser
+from ..db.models import User as DBUser
 
 router = APIRouter()
 

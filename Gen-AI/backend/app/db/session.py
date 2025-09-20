@@ -1,10 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from ..core.config import settings
-from ..db.database import Base
-
-# Import additional models to ensure they are included in database schema
-from ..models import trips, itinerary, feedback, preferences
+from .models import Base
 
 # Use database URL from settings
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL

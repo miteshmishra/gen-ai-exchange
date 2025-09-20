@@ -25,7 +25,7 @@ class ADKClient:
             return service_account.credentials.from_service_account_file(settings.GOOGLE_APPLICATION_CREDENTIALS)
         return None
 
-    def generate_content(self, prompt: str, images: List[str] = None) -> str:
+    async def generate_content(self, prompt: str, images: List[str] = None) -> str:
         contents = [prompt]
         if images:
             for img_path in images:
@@ -42,8 +42,10 @@ class ADKClient:
                 except Exception as e:
                     print(f"Error loading image {img_path}: {e}")
 
-        response = self.model.generate_content(contents)
+        response = await self.model.generate_content(contents)
         return response.text
 
-def get_adk_client(project_id: str = None, location: str = None, credentials = None) -> ADKClient:
+def get_adk_client(project_id: str = None, location: str = None, credentials = None, mock_client: Any = None) -> ADKClient:
+    if mock_client:
+        return mock_client
     return ADKClient(project_id=project_id, location=location, credentials=credentials)

@@ -1,22 +1,13 @@
 from pydantic import BaseModel
-from typing import Dict, List, Optional
-from datetime import date
+from typing import Optional, List
 
 class PriceRange(BaseModel):
     min: float
     max: float
 
-class TripDuration(BaseModel):
-    min: int
-    max: int
-
-class TravelDates(BaseModel):
-    start: str
-    end: str
-
 class FilterOptions(BaseModel):
-    priceRange: PriceRange
-    rating: float
-    amenities: List[str]
-    travelDates: TravelDates
-    tripDuration: TripDuration
+    priceRange: Optional[PriceRange] = None
+    rating: Optional[int] = None
+    amenities: Optional[List[str]] = None
+    travelDates: Optional[dict] = None  # Assuming a dictionary for now, can be refined
+    tripDuration: Optional[dict] = None # Assuming a dictionary for now, can be refined
